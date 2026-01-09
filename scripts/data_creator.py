@@ -102,12 +102,9 @@ def run():
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = pygame.mouse.get_pos()
-                print('here')
                 if button_type[0]:
-                    print('1')
                     assign_datapoint(mouse_pos, 1)
                 elif button_type[2]:
-                    print('2')
                     assign_datapoint(mouse_pos, 2)
                     
                 draw_points(grid)
