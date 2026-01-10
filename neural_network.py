@@ -17,8 +17,8 @@ class NeuralNetwork:
         # Shuffling data
         random_indexes = np.arange(self.N)
         np.random.shuffle(random_indexes)
-        self.data = data[random_indexes]
-        self.labels = labels[random_indexes]
+        self.data = data[random_indexes].copy()
+        self.labels = labels[random_indexes].copy()
 
         self.learning_rate = learning_rate
         self.batch_size = batch_size
@@ -39,7 +39,7 @@ class NeuralNetwork:
     def train(self) -> None:
         stopped = False
         training_data_size = len(self.training_data)
-        batches_num = round(training_data_size / self.batch_size)
+        batches_num = math.ceil(training_data_size / self.batch_size)
 
         self.print_performance()
 
@@ -60,7 +60,7 @@ class NeuralNetwork:
             
             self.iterations += 1
 
-            if (self.iterations % 1000 == 0):
+            if (self.iterations % 500 == 0):
                 self.print_performance()
 
 
@@ -75,7 +75,7 @@ class NeuralNetwork:
     def loss(predicts: np.ndarray, labels: np.ndarray) -> float:
         corrected_labels = labels - 1
 
-        losses = np.log(predicts[corrected_labels])
+        losses = np.log(predicts[np.arange(predicts.shape[0]), corrected_labels])
         losses *= -1
 
         return np.mean(losses)
@@ -106,7 +106,20 @@ class NeuralNetwork:
         print(f"Iterations: {self.iterations}")
         print(f"Testing data loss: {NeuralNetwork.loss(testing_predicts, self.testing_labels)}")
         print(f"Accuracy: {NeuralNetwork.cost(testing_predicts, self.testing_labels)} / {self.testing_labels.size} \n")
-        
+
+    def print_layer_values(self):
+        print("\n##########################################")
+        print("#########  PRINTING INFORMATION  #########")
+        for layer in self.layers:
+            print(f"\nLayer ({layer.nodes_in}, {layer.nodes_num})")
+            print("Weight information:")
+            print(layer.weights)
+            print(layer.costGradientWeights)
+            print(layer.velocityWeights)
+            print("Baises information")
+            print(layer.biases)
+            print(layer.costGradientBiases)
+            print(layer.velocityBiases)
 
 if __name__ == "__main__":
     pass

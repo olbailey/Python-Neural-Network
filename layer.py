@@ -14,8 +14,8 @@ class Layer:
         self.costGradientWeights = np.zeros((nodes_num, nodes_in))
         self.costGradientBiases = np.zeros(nodes_num)
 
-        self.batch_outputs = np.zeros((batch_size, nodes_num))
-        self.batch_error_signals = np.zeros((batch_size, nodes_num))
+        self.batch_outputs: np.ndarray = None
+        self.batch_error_signals: np.ndarray = None
 
         self.velocityWeights = np.zeros((nodes_num, nodes_in))
         self.velocityBiases = np.zeros(nodes_num)
@@ -30,8 +30,8 @@ class Layer:
         elif (activation_name == "Softmax"):
             Layer.softmax(layer_outputs)
 
-        self.batch_outputs = layer_outputs
-        return layer_outputs.copy()
+        self.batch_outputs = layer_outputs.copy()
+        return layer_outputs
     
     def apply_gradients(self, learning_rate: float, beta: float) -> None:
         self.velocityBiases *= beta
@@ -55,8 +55,8 @@ class Layer:
 
         self.batch_error_signals = self.hot_vector_output(corrected_labels)
 
-        self.costGradientBiases += np.sum(self.batch_error_signals[np.arange(batch_size)], axis=0)
-        self.costGradientWeights += self.batch_error_signals[:batch_size].T @ previous_layer.batch_outputs[:batch_size]
+        self.costGradientBiases += np.sum(self.batch_error_signals, axis=0)
+        self.costGradientWeights += self.batch_error_signals.T @ previous_layer.batch_outputs
 
         self.costGradientBiases /= batch_size
         self.costGradientWeights /= batch_size
@@ -64,12 +64,12 @@ class Layer:
     def backpropagation_hidden_layer(self, previous_layer: Self, input_data: np.ndarray) -> None:
         batch_size = input_data.shape[0]
         
-        self.batch_error_signals = (previous_layer.weights.T @ previous_layer.batch_error_signals[:batch_size].T).T
+        self.batch_error_signals = (previous_layer.weights.T @ previous_layer.batch_error_signals.T).T
 
-        self.batch_error_signals - np.power(self.batch_outputs[:batch_size], 2)
+        self.batch_error_signals *= 1 - self.batch_outputs ** 2
 
-        self.costGradientBiases += np.sum(self.batch_error_signals[np.arange(batch_size)], axis=0)
-        self.costGradientWeights += self.batch_error_signals[:batch_size].T @ input_data
+        self.costGradientBiases += np.sum(self.batch_error_signals, axis=0)
+        self.costGradientWeights += self.batch_error_signals.T @ input_data
 
         self.costGradientBiases /= batch_size
         self.costGradientWeights /= batch_size        
@@ -93,7 +93,7 @@ class Layer:
         return Layer.xavier(nodes_num, nodes_in)
 
     def hot_vector_output(self, labels: np.ndarray) -> np.ndarray:
-        values = self.batch_outputs
+        values = self.batch_outputs.copy()
         values[np.arange(values.shape[0]), labels] -= 1
         return values
 
