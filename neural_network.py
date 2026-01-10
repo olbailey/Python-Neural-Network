@@ -31,10 +31,10 @@ class NeuralNetwork:
         testing_cut_off = math.floor(self.N * self.TRAINING_SPLIT)
 
         self.training_data = self.data[0 : testing_cut_off]
-        self.training_labels = self.data[testing_cut_off : self.N]
+        self.training_labels = self.labels[0 : testing_cut_off]
 
-        self.testing_data = self.labels[0 : testing_cut_off]
-        self.testing_labels = self.labels[testing_cut_off : self.N] 
+        self.testing_data = self.data[testing_cut_off : self.N]
+        self.testing_labels = self.labels[testing_cut_off : self.N]
 
     def train(self) -> None:
         stopped = False
@@ -60,22 +60,17 @@ class NeuralNetwork:
             
             self.iterations += 1
 
-            if (self.iterations % 100 == 0):
+            if (self.iterations % 1000 == 0):
                 self.print_performance()
 
 
     def forward_pass(self, data_batch: np.ndarray) -> np.ndarray:
-        batch_output = np.zeros((self.batch_size, self.layers[-1].nodes_num))
+        outputs = self.layers[0].calculate_output(data_batch, "Tanh")
 
-        for i in range(len(data_batch)):
-            outputs = self.layers[0].calculate_output(data_batch[i], "Tanh")
+        for j in range(1, self.size - 1):
+            outputs = self.layers[j].calculate_output(outputs, "Tanh")
 
-            for j in range(1, self.size - 1):
-                outputs = self.layers[j].calculate_output(outputs, "Tanh")
-
-            batch_output[i] = self.layers[self.size - 1].calculate_output(outputs, "Softmax")
-
-        return batch_output
+        return self.layers[self.size - 1].calculate_output(outputs, "Softmax")
     
     def loss(predicts: np.ndarray, labels: np.ndarray) -> float:
         corrected_labels = labels - 1
@@ -97,7 +92,7 @@ class NeuralNetwork:
             layer.apply_gradients(self.learning_rate, self.BETA)
 
     def cost(predicts: np.ndarray, labels: np.ndarray) -> int:
-        predicted_outputs = np.argmax(predicts)
+        predicted_outputs = np.argmax(predicts, axis=1)
         predicted_outputs += 1
 
         return np.sum(np.equal(predicted_outputs, labels, out=predicted_outputs))
@@ -106,11 +101,9 @@ class NeuralNetwork:
         testing_predicts = self.forward_pass(self.testing_data)
         
         print(f"Iterations: {self.iterations}")
-        print(f"Testing data loss: {self.loss(testing_predicts, self.testing_labels)}")
-        print(f"Accuracy: {self.cost(testing_predicts, self.testing_labels)}")
+        print(f"Testing data loss: {NeuralNetwork.loss(testing_predicts, self.testing_labels)}")
+        print(f"Accuracy: {NeuralNetwork.cost(testing_predicts, self.testing_labels)} / {self.testing_labels.size} \n")
         
 
 if __name__ == "__main__":
-    x = np.array([1, 0, 1, 0])
-    y = np.array([0, 0, 1, 0])
-    print(np.sum(np.equal(x, y)))
+    pass

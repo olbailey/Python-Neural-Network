@@ -1,4 +1,5 @@
 from typing import Self
+import math
 
 import numpy as np
 
@@ -19,18 +20,18 @@ class Layer:
         self.velocityWeights = np.zeros((nodes_num, nodes_in))
         self.velocityBiases = np.zeros(nodes_num)
 
-    def calculate_output(self, inputs: np.ndarray, activation_name: str) -> np.ndarray:
+    def calculate_output(self, inputs_batch: np.ndarray, activation_name: str) -> np.ndarray:
         layer_outputs = np.zeros(self.nodes_num)
 
-        layer_outputs = np.dot(self.weights, inputs) + self.biases
+        layer_outputs = (self.weights @ inputs_batch.T).T + self.biases
 
         if (activation_name == "Tanh"):
             np.tanh(layer_outputs, out=layer_outputs)
         elif (activation_name == "Softmax"):
             Layer.softmax(layer_outputs)
 
-        self.batch_outputs.append(layer_outputs)
-        return layer_outputs
+        self.batch_outputs = layer_outputs
+        return layer_outputs.copy()
     
     def apply_gradients(self, learning_rate: float, beta: float) -> None:
         self.velocityBiases *= beta
@@ -54,7 +55,7 @@ class Layer:
 
         self.batch_error_signals = self.hot_vector_output(corrected_labels)
 
-        self.costGradientBiases += self.batch_error_signals[np.arange(batch_size)]
+        self.costGradientBiases += np.sum(self.batch_error_signals[np.arange(batch_size)], axis=0)
         self.costGradientWeights += self.batch_error_signals[:batch_size].T @ previous_layer.batch_outputs[:batch_size]
 
         self.costGradientBiases /= batch_size
@@ -67,28 +68,29 @@ class Layer:
 
         self.batch_error_signals - np.power(self.batch_outputs[:batch_size], 2)
 
-        self.costGradientBiases += self.batch_error_signals[np.arange(batch_size)]
+        self.costGradientBiases += np.sum(self.batch_error_signals[np.arange(batch_size)], axis=0)
         self.costGradientWeights += self.batch_error_signals[:batch_size].T @ training_data
 
         self.costGradientBiases /= batch_size
         self.costGradientWeights /= batch_size        
 
     def softmax(inputs: np.ndarray) -> None:
-        max_value = np.max(inputs)
+        max_values = np.max(inputs, axis=1)
 
-        inputs -= max_value
+        inputs -= max_values[:, None]
         np.exp(inputs, out=inputs)
 
-        norm_base = np.sum(inputs)
+        norm_base = np.sum(inputs, axis=1)
 
-        inputs /= norm_base
+        inputs /= norm_base[:, None]
 
 
-    def xavier():
-        pass
+    def xavier(nodes_in, nodes_num):
+        limit = math.sqrt(6 / (nodes_in + nodes_num))
+        return np.random.uniform(-limit, limit, size=(nodes_num, nodes_in))
 
     def initialise_weights(nodes_in, nodes_num) -> np.ndarray:
-        pass
+        return Layer.xavier(nodes_in, nodes_num)
 
     def hot_vector_output(self, labels: np.ndarray) -> np.ndarray:
         values = self.batch_outputs
