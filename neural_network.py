@@ -83,9 +83,12 @@ class NeuralNetwork:
     def backpropagation(self, training_data: np.ndarray, training_labels: np.ndarray):
         self.layers[-1].backpropagation_output_layer(self.layers[self.size - 2], training_labels)
 
-                # int i = size - 2; i >=0; --i
-        for i in range(self.size - 2, -1, -1):
-            self.layers[i].backpropagation_hidden_layer(self.layers[i + 1], training_data)
+                # int i = size - 2; i > 0; --i
+        for i in range(self.size - 2, 0, -1):
+            self.layers[i].backpropagation_hidden_layer(self.layers[i + 1], self.layers[i - 1].batch_outputs)
+
+        self.layers[0].backpropagation_hidden_layer(self.layers[1], training_data)
+        
 
     def apply_gradients(self) -> None:
         for layer in self.layers:
