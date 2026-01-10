@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 from layer import Layer
 
@@ -12,22 +14,34 @@ class NeuralNetwork:
         self.size = len(shape) - 1
         self.N = len(data)
 
+        # Shuffling data
+        random_indexes = np.arange(self.N)
+        np.random.shuffle(random_indexes)
+        self.data = data[random_indexes]
+        self.labels = labels[random_indexes]
+
         self.learning_rate = learning_rate
-        self.data = data
-        self.labels = labels
         self.batch_size = batch_size
 
+        # Creating network layers
         for i in range(self.size):
-            self.layers.append(Layer(shape[i], shape[i + 1]))
+            self.layers.append(Layer(shape[i], shape[i + 1], batch_size))
 
-        self.split_data()
+        # Splitting training and testing data
+        testing_cut_off = math.floor(self.N * self.TRAINING_SPLIT)
 
-    def train(self):
+        self.training_data = self.data[0 : testing_cut_off]
+        self.training_labels = self.data[testing_cut_off : self.N]
+
+        self.testing_data = self.labels[0 : testing_cut_off]
+        self.testing_labels = self.labels[testing_cut_off : self.N] 
+
+    def train(self) -> None:
         stopped = False
         training_data_size = len(self.training_data)
-        batches_num = training_data_size / self.batch_size
+        batches_num = round(training_data_size / self.batch_size)
 
-        NeuralNetwork.print_performance()
+        self.print_performance()
 
         while not stopped:
             for i in range(1, batches_num):
@@ -46,8 +60,8 @@ class NeuralNetwork:
             
             self.iterations += 1
 
-            if (self.iterations % 1000 == 0):
-                NeuralNetwork.print_performance()
+            if (self.iterations % 100 == 0):
+                self.print_performance()
 
 
     def forward_pass(self, data_batch: np.ndarray) -> np.ndarray:
@@ -71,21 +85,32 @@ class NeuralNetwork:
 
         return np.mean(losses)
 
-    def backpropagation(self):
-        pass
+    def backpropagation(self, training_data: np.ndarray, training_labels: np.ndarray):
+        self.layers[-1].backpropagation_output_layer(self.layers[self.size - 2], training_labels)
 
-    def apply_gradients(self):
-        pass
+                # int i = size - 2; i >=0; --i
+        for i in range(self.size - 2, -1, -1):
+            self.layers[i].backpropagation_hidden_layer(self.layers[i + 1], training_data)
+
+    def apply_gradients(self) -> None:
+        for layer in self.layers:
+            layer.apply_gradients(self.learning_rate, self.BETA)
+
+    def cost(predicts: np.ndarray, labels: np.ndarray) -> int:
+        predicted_outputs = np.argmax(predicts)
+        predicted_outputs += 1
+
+        return np.sum(np.equal(predicted_outputs, labels, out=predicted_outputs))
+
+    def print_performance(self) -> None:
+        testing_predicts = self.forward_pass(self.testing_data)
         
-    def split_data(self):
-        self.training_data = 
-        self.training_labels = 
-        self.testing_data = 
-        self.testing_labels = 
-
-    def print_performance():
-        pass
+        print(f"Iterations: {self.iterations}")
+        print(f"Testing data loss: {self.loss(testing_predicts, self.testing_labels)}")
+        print(f"Accuracy: {self.cost(testing_predicts, self.testing_labels)}")
         
 
 if __name__ == "__main__":
-    pass
+    x = np.array([1, 0, 1, 0])
+    y = np.array([0, 0, 1, 0])
+    print(np.sum(np.equal(x, y)))

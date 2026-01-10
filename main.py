@@ -1,4 +1,9 @@
+from csv_reader import CsvReader
+from neural_network import NeuralNetwork 
+
 BATCH_SIZE = 64
-TRAINING_SPLIT = 0.85
 
+data, labels = CsvReader.get_data("data/centralCircleSmall.csv")
 
+boby = NeuralNetwork(data, labels, (2, 2, 2), 0.0003, BATCH_SIZE)
+boby.train()
