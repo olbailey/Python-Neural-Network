@@ -4,7 +4,12 @@ import math
 import numpy as np
 
 class Layer:
-    def __init__(self, nodes_in: int, nodes_num: int, batch_size: int) -> None:
+    RELU_ALPHA = 0.01
+    ACTIVATION_FUNCTIONS = ["Tanh", "ReLu"]
+    ACT_FUNC = ACTIVATION_FUNCTIONS[1]
+    OUT_FUNC = "Softmax"
+
+    def __init__(self, nodes_in: int, nodes_num: int) -> None:
         self.nodes_in = nodes_in
         self.nodes_num = nodes_num
 
@@ -20,15 +25,20 @@ class Layer:
         self.velocityWeights = np.zeros((nodes_num, nodes_in))
         self.velocityBiases = np.zeros(nodes_num)
 
-    def calculate_output(self, inputs_batch: np.ndarray, activation_name: str) -> np.ndarray:
+    def calculate_output(self, inputs_batch: np.ndarray, Hidden_activation: bool) -> np.ndarray:
         layer_outputs = np.zeros(self.nodes_num)
 
         layer_outputs = (self.weights @ inputs_batch.T).T + self.biases
 
-        if (activation_name == "Tanh"):
-            np.tanh(layer_outputs, out=layer_outputs)
-        elif (activation_name == "Softmax"):
-            Layer.softmax(layer_outputs)
+        if Hidden_activation:
+            if (Layer.ACT_FUNC == "Tanh"):
+                np.tanh(layer_outputs, out=layer_outputs)
+
+            elif (Layer.ACT_FUNC == "ReLu"):
+                np.where(layer_outputs > 0, layer_outputs, layer_outputs * Layer.RELU_ALPHA)
+        else:
+            if (Layer.OUT_FUNC == "Softmax"):
+                Layer.softmax(layer_outputs)
 
         self.batch_outputs = layer_outputs.copy()
         return layer_outputs
@@ -66,13 +76,13 @@ class Layer:
         
         self.batch_error_signals = (previous_layer.weights.T @ previous_layer.batch_error_signals.T).T
 
-        self.batch_error_signals *= 1 - self.batch_outputs ** 2
+        self.batch_error_signals *= Layer.calculate_derivative(self.batch_outputs)
 
         self.costGradientBiases += np.sum(self.batch_error_signals, axis=0)
         self.costGradientWeights += self.batch_error_signals.T @ input_data
 
         self.costGradientBiases /= batch_size
-        self.costGradientWeights /= batch_size        
+        self.costGradientWeights /= batch_size          
 
     def softmax(inputs: np.ndarray) -> None:
         max_values = np.max(inputs, axis=1)
@@ -84,19 +94,37 @@ class Layer:
 
         inputs /= norm_base[:, None]
 
+    def xavier(fan_out, fan_in):
+        limit = math.sqrt(6 / (fan_in + fan_out))
+        return np.random.uniform(-limit, limit, size=(fan_out, fan_in))
+    
+    def he_normal(fan_out, fan_in):
+        limit = math.sqrt(6 / (fan_in))
 
-    def xavier(nodes_num, nodes_in):
-        limit = math.sqrt(6 / (nodes_in + nodes_num))
-        return np.random.uniform(-limit, limit, size=(nodes_num, nodes_in))
+        return np.random.uniform(-limit, limit, size=(fan_out, fan_in))
 
     def initialise_weights(nodes_num, nodes_in) -> np.ndarray:
-        return Layer.xavier(nodes_num, nodes_in)
+        if Layer.ACT_FUNC == "Tanh":
+            return Layer.xavier(nodes_num, nodes_in)
+        elif Layer.ACT_FUNC == "ReLu":
+            return Layer.he_normal(nodes_num, nodes_in)
 
     def hot_vector_output(self, labels: np.ndarray) -> np.ndarray:
         values = self.batch_outputs.copy()
         values[np.arange(values.shape[0]), labels] -= 1
         return values
 
+    def calculate_derivative(inputs: np.ndarray):
+        if Layer.ACT_FUNC == "Tanh":
+            return  1 - (inputs ** 2)
+        elif Layer.ACT_FUNC == "ReLu":
+            print(inputs[:5])
+            values = inputs.copy()
+            values[values > 0] = 1
+            values[values < 0] = Layer.RELU_ALPHA
+            print(values[:5])
+            raise Exception("done")
+            return values
 
 
 if __name__ == "__main__":

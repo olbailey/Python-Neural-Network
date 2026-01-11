@@ -25,7 +25,7 @@ class NeuralNetwork:
 
         # Creating network layers
         for i in range(self.size):
-            self.layers.append(Layer(shape[i], shape[i + 1], batch_size))
+            self.layers.append(Layer(shape[i], shape[i + 1]))
 
         # Splitting training and testing data
         testing_cut_off = math.floor(self.N * self.TRAINING_SPLIT)
@@ -65,12 +65,12 @@ class NeuralNetwork:
 
 
     def forward_pass(self, data_batch: np.ndarray) -> np.ndarray:
-        outputs = self.layers[0].calculate_output(data_batch, "Tanh")
+        outputs = self.layers[0].calculate_output(data_batch, True)
 
         for j in range(1, self.size - 1):
-            outputs = self.layers[j].calculate_output(outputs, "Tanh")
+            outputs = self.layers[j].calculate_output(outputs, True)
 
-        return self.layers[self.size - 1].calculate_output(outputs, "Softmax")
+        return self.layers[self.size - 1].calculate_output(outputs, False)
     
     def loss(predicts: np.ndarray, labels: np.ndarray) -> float:
         corrected_labels = labels - 1
