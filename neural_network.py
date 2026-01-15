@@ -42,7 +42,7 @@ class NeuralNetwork:
         training_data_size = len(self.training_data)
         batches_num = math.ceil(training_data_size / self.batch_size)
 
-        display(self.labels - 1, points=self.data)
+        # display(self.labels - 1, points=self.data)
         self.print_performance(False)
 
         while not stopped:
@@ -62,7 +62,7 @@ class NeuralNetwork:
             
             self.iterations += 1
 
-            if (self.iterations % 100 == 0):
+            if (self.iterations % 10 == 0):
                 self.print_performance(True)
 
 
@@ -75,9 +75,7 @@ class NeuralNetwork:
         return self.layers[self.size - 1].calculate_output(outputs, False)
     
     def loss(predicts: np.ndarray, labels: np.ndarray) -> float:
-        corrected_labels = labels - 1
-
-        losses = np.log(predicts[np.arange(predicts.shape[0]), corrected_labels])
+        losses = np.log(predicts[np.arange(predicts.shape[0]), labels.copy()])
         losses *= -1
 
         return np.mean(losses)
@@ -98,7 +96,6 @@ class NeuralNetwork:
 
     def cost(predicts: np.ndarray, labels: np.ndarray) -> int:
         predicted_outputs = np.argmax(predicts, axis=1)
-        predicted_outputs += 1
 
         return np.sum(np.equal(predicted_outputs, labels, out=predicted_outputs))
 
@@ -109,9 +106,9 @@ class NeuralNetwork:
         print(f"Testing data loss: {NeuralNetwork.loss(testing_predicts, self.testing_labels)}")
         print(f"Accuracy: {NeuralNetwork.cost(testing_predicts, self.testing_labels)} / {self.testing_labels.size} \n")
         
-        if show_graph and input("y or n: ") == "y":
-            every_possible_point = np.array([[x, y, math.sqrt(x ** 2 + y ** 2)] for y in range(187) for x in range(187)])
-            display(np.argmax(self.forward_pass(every_possible_point), axis=1))
+        # if show_graph and input("y or n: ") == "y":
+        #     every_possible_point = np.array([[x, y, math.sqrt(x ** 2 + y ** 2)] for y in range(187) for x in range(187)])
+        #     display(np.argmax(self.forward_pass(every_possible_point), axis=1))
 
     def print_layer_values(self):
         print("\n##########################################")

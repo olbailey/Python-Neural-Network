@@ -60,9 +60,8 @@ class Layer:
 
     def backpropagation_output_layer(self, previous_layer: Self, training_labels: np.ndarray) -> None:
         batch_size = training_labels.shape[0]
-        corrected_labels = training_labels - 1
 
-        self.batch_error_signals = self.hot_vector_output(corrected_labels)
+        self.batch_error_signals = self.hot_vector_output(training_labels.copy())
 
         self.costGradientBiases += np.sum(self.batch_error_signals, axis=0)
         self.costGradientWeights += self.batch_error_signals.T @ previous_layer.batch_outputs
