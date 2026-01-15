@@ -4,7 +4,6 @@ import math
 import numpy as np
 
 class Layer:
-    RELU_ALPHA = 0.01
     ACTIVATION_FUNCTIONS = ["Tanh", "ReLu"]
     ACT_FUNC = ACTIVATION_FUNCTIONS[1]
     OUT_FUNC = "Softmax"
@@ -35,7 +34,7 @@ class Layer:
                 np.tanh(layer_outputs, out=layer_outputs)
 
             elif (Layer.ACT_FUNC == "ReLu"):
-                np.where(layer_outputs > 0, layer_outputs, layer_outputs * Layer.RELU_ALPHA)
+                layer_outputs[layer_outputs < 0] = 0
         else:
             if (Layer.OUT_FUNC == "Softmax"):
                 Layer.softmax(layer_outputs)
@@ -98,7 +97,7 @@ class Layer:
         limit = math.sqrt(6 / (fan_in + fan_out))
         return np.random.uniform(-limit, limit, size=(fan_out, fan_in))
     
-    def he_normal(fan_out, fan_in):
+    def he_uniform(fan_out, fan_in):
         limit = math.sqrt(6 / (fan_in))
 
         return np.random.uniform(-limit, limit, size=(fan_out, fan_in))
@@ -107,7 +106,7 @@ class Layer:
         if Layer.ACT_FUNC == "Tanh":
             return Layer.xavier(nodes_num, nodes_in)
         elif Layer.ACT_FUNC == "ReLu":
-            return Layer.he_normal(nodes_num, nodes_in)
+            return Layer.he_uniform(nodes_num, nodes_in)
 
     def hot_vector_output(self, labels: np.ndarray) -> np.ndarray:
         values = self.batch_outputs.copy()
@@ -118,12 +117,9 @@ class Layer:
         if Layer.ACT_FUNC == "Tanh":
             return  1 - (inputs ** 2)
         elif Layer.ACT_FUNC == "ReLu":
-            print(inputs[:5])
             values = inputs.copy()
             values[values > 0] = 1
-            values[values < 0] = Layer.RELU_ALPHA
-            print(values[:5])
-            raise Exception("done")
+            values[values < 0] = 0
             return values
 
 
