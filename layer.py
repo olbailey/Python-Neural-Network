@@ -93,16 +93,16 @@ class Layer:
 
         inputs /= norm_base[:, None]
 
-    def xavier(fan_out, fan_in):
+    def xavier(fan_out: int, fan_in: int):
         limit = math.sqrt(6 / (fan_in + fan_out))
         return np.random.uniform(-limit, limit, size=(fan_out, fan_in))
     
-    def he_uniform(fan_out, fan_in):
+    def he_uniform(fan_out: int, fan_in: int):
         limit = math.sqrt(6 / (fan_in))
 
         return np.random.uniform(-limit, limit, size=(fan_out, fan_in))
 
-    def initialise_weights(nodes_num, nodes_in) -> np.ndarray:
+    def initialise_weights(nodes_num: int, nodes_in: int) -> np.ndarray:
         if Layer.ACT_FUNC == "Tanh":
             return Layer.xavier(nodes_num, nodes_in)
         elif Layer.ACT_FUNC == "ReLu":
